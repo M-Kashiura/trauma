@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脾損傷治療プロトコル</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for better aesthetics */
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+        .main-container {
+            display: flex;
+            height: calc(100vh - 120px); /* Adjust height based on header/footer */
+        }
+        .control-panel {
+            width: 35%;
+            min-width: 320px;
+            max-width: 400px;
+            overflow-y: auto;
+        }
+        .preview-panel {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .control-panel {
+                width: 100%;
+                max-width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white shadow-md p-4">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-2xl font-bold text-red-700">脾損傷治療プロトコル</h1>
+            <p class="text-sm text-gray-500">自治医科大学附属さいたま医療センター (2025年7月作成)</p>
+        </div>
+    </header>
+
+    <main class="main-container max-w-7xl mx-auto mt-4">
+        <!-- Left Side: Controls -->
+        <div id="controls" class="control-panel bg-white p-6 border-r border-gray-200">
+            <div class="space-y-6">
+                <div>
+                    <label for="injury-type" class="block text-sm font-medium text-gray-700 mb-1">損傷形態</label>
+                    <select id="injury-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md shadow-sm">
+                        <option value="type1">I型</option>
+                        <option value="type2">II型</option>
+                        <option value="type3">III型</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="admission-date" class="block text-sm font-medium text-gray-700 mb-1">入院日</label>
+                    <input type="date" id="admission-date" class="mt-1 block w-full pl-3 pr-4 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md shadow-sm">
+                </div>
+                <button onclick="displayProtocol()" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                    プロトコル表示
+                </button>
+            </div>
+             <div class="mt-8 text-xs text-gray-500">
+                <p><strong>出典:</strong><br>Journal of Trauma and Acute Care Surgery. 2023.94.(3).448-454<br>日本外傷学会の臓器損傷分類2008</p>
+            </div>
+        </div>
+
+        <!-- Right Side: Preview -->
+        <div id="preview" class="preview-panel bg-gray-50 p-6 lg:p-8">
+            <div id="protocol-output" class="bg-white p-8 rounded-lg shadow-lg">
+                <div class="text-center text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">プロトコル表示エリア</h3>
+                    <p class="mt-1 text-sm text-gray-500">左のパネルで項目を選択し、「プロトコル表示」ボタンを押してください。</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function displayProtocol() {
+            const injuryType = document.getElementById('injury-type').value;
+            const admissionDateInput = document.getElementById('admission-date').value;
+            const outputDiv = document.getElementById('protocol-output');
+
+            if (!admissionDateInput) {
+                outputDiv.innerHTML = `
+                    <div class="text-center text-red-600">
+                        <p class="font-bold">エラー</p>
+                        <p>入院日を入力してください。</p>
+                    </div>`;
+                return;
+            }
+
+            const admissionDate = new Date(admissionDateInput + 'T00:00:00');
+
+            const formatDate = (date) => {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                const days = ['日', '月', '火', '水', '木', '金', '土'];
+                const dayOfWeek = days[date.getDay()];
+                return `${y}/${m}/${d} (${dayOfWeek})`;
+            };
+            
+            const addDays = (date, days) => {
+                const newDate = new Date(date);
+                newDate.setDate(date.getDate() + days);
+                return newDate;
+            };
+
+            let content = '';
+            let typeLabel = '';
+
+            const createSection = (title, items) => {
+                let listItems = items.map(item => `<li class="flex items-start py-3"><span class="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded-full bg-red-100 text-red-700 font-bold text-xs mr-3">✔</span><span class="text-gray-700">${item}</span></li>`).join('');
+                return `
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 border-b-2 border-red-500 pb-2 mb-3">${title}</h3>
+                        <ul class="divide-y divide-gray-200">${listItems}</ul>
+                    </div>
+                `;
+            };
+            
+            const createTable = (headers, rows, type) => {
+                let periodMap = {};
+                if (type === 'type1') {
+                    periodMap = { light: '直後から可', medium: '1週間', heavy: '2週間' };
+                } else if (type === 'type2') {
+                    periodMap = { light: '2週間', medium: '4週間', heavy: '6週間' };
+                } else { // type3
+                    periodMap = { light: '4週間', medium: '6週間', heavy: '8週' };
+                }
+
+                const rowData = [
+                    { level: '軽労作', content: 'オフィスワーク、簡単な家事など', period: periodMap.light },
+                    { level: '中労作', content: 'ランニング、建築作業、10kgの荷物運搬など', period: periodMap.medium },
+                    { level: '重労作', content: 'コンタクトスポーツなど', period: periodMap.heavy }
+                ];
+
+                let tableRows = rowData.map(row => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium text-gray-900">${row.level}</td>
+                        <td class="px-4 py-3 text-gray-600">${row.content}</td>
+                        <td class="px-4 py-3 text-gray-900 font-semibold">${row.period}</td>
+                    </tr>
+                `).join('');
+
+                return `
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">労作レベル</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">内容</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">復帰までの目安</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">${tableRows}</tbody>
+                        </table>
+                    </div>
+                `;
+            };
+
+            if (injuryType === 'type1') {
+                typeLabel = 'I型';
+                const day2 = addDays(admissionDate, 1);
+                const day3 = addDays(admissionDate, 2);
+                const followupDate = addDays(admissionDate, 6);
+
+                content = `
+                    <h2 class="text-2xl font-bold text-red-700 mb-4">${typeLabel} 治療プロトコル</h2>
+                    ${createSection('入院中の流れ', [
+                        `<strong>Day 1 (${formatDate(admissionDate)}):</strong> 受傷。飲水開始。`,
+                        `<strong>Day 2 (${formatDate(day2)}):</strong> Tertiary Survey施行、採血 → 食事開始、離床開始。`,
+                        `<strong>Day 3 (${formatDate(day3)}):</strong> 退院可能。`
+                    ])}
+                    ${createSection('管理方針', [
+                        '<strong>飲食:</strong> 飲水は入院直後から、食事は入院2日目から。',
+                        '<strong>安静度:</strong> 入院2日目から制限なし。',
+                        '<strong>CTフォロー (入院中):</strong> 原則として不要 (※貧血進行やバイタルサイン悪化時は施行)。',
+                        '<strong>退院基準:</strong> 入院2日目以降で、食事摂取・離床が問題ないこと。'
+                    ])}
+                    ${createSection('外来フォローアップ', [
+                        `<strong>約1週後 (${formatDate(followupDate)}ごろ):</strong> 採血とCTフォロー。問題なければ終診。`
+                    ])}
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 border-b-2 border-red-500 pb-2 mb-3">社会復帰の目安 (最低期間)</h3>
+                        ${createTable([], [], 'type1')}
+                    </div>
+                `;
+            } else { // II型 and III型
+                typeLabel = injuryType === 'type2' ? 'II型' : 'III型';
+                const day2 = addDays(admissionDate, 1);
+                const day3 = addDays(admissionDate, 2);
+                const day4 = addDays(admissionDate, 3);
+                const day5 = addDays(admissionDate, 4);
+                const day7 = addDays(admissionDate, 6);
+                const followupDate1 = addDays(admissionDate, 27);
+                const followupDate2 = addDays(admissionDate, 69);
+                
+                content = `
+                    <h2 class="text-2xl font-bold text-red-700 mb-4">${typeLabel} 治療プロトコル</h2>
+                    ${createSection('入院中の流れ', [
+                        `<strong>Day 1 (${formatDate(admissionDate)}):</strong> 受傷。飲水開始。`,
+                        `<strong>Day 2 (${formatDate(day2)}):</strong> Tertiary Survey施行、採血 → 食事開始。`,
+                        `<strong>Day 3-4 (${formatDate(day3)}～${formatDate(day4)}):</strong> 離床開始。`,
+                        `<strong>Day 5-7 (${formatDate(day5)}～${formatDate(day7)}):</strong> 造影CTフォロー。結果により追加治療を検討。`,
+                        `<strong>Day 7以降 (${formatDate(day7)}～):</strong> 退院可能。`
+                    ])}
+                    ${createSection('管理方針', [
+                        '<strong>飲食:</strong> 飲水は入院直後から、食事は入院2日目から。',
+                        '<strong>安静度:</strong> 入院3-4日目から制限なし。',
+                        '<strong>CTフォロー (入院中):</strong> 入院5-7日後に造影CTフォロー (※貧血進行やバイタルサイン悪化時は適宜施行)。',
+                        '<strong>退院基準:</strong> 入院5-7日後の造影CTで問題なく、食事摂取・離床が問題ないこと。'
+                    ])}
+                    ${createSection('外来フォローアップ', [
+                        `<strong>約4週後 (${formatDate(followupDate1)}ごろ) および 10週後 (${formatDate(followupDate2)}ごろ):</strong> 採血とCTフォロー。問題なければ終診。`
+                    ])}
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 border-b-2 border-red-500 pb-2 mb-3">社会復帰の目安 (最低期間)</h3>
+                        ${createTable([], [], injuryType)}
+                    </div>
+                `;
+            }
+            outputDiv.innerHTML = content;
+        }
+
+        // Set default date to today and display initial protocol
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.getElementById('admission-date').valueAsDate = new Date();
+            displayProtocol();
+        });
+
+    </script>
+</body>
+</html>
